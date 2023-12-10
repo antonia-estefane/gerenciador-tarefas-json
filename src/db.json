@@ -1,0 +1,12 @@
+{
+    "gerenciadorTarefas": [
+        {
+            "id": 1,
+            "tarefa": "limpar a escada"
+        },
+        {
+            "id": 2,
+            "tarefa": "lavar os panos de chão e tapetes"
+        }
+    ]
+}

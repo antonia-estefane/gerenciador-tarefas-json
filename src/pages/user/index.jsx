@@ -1,33 +1,25 @@
 import React, { useEffect, useState } from "react";
 import { Form, Button } from "bootstrap-4-react";
-import { db } from "../../services/firebaseConnection";
-import {
-  addDoc,
-  collection,
-  getDocs,
-  doc,
-  deleteDoc,
-} from "firebase/firestore";
-    import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import axios from 'axios'
 
 const MyUser = () => {
   const [tarefa, setTarefa] = useState();
   const [tarefas, setTarefas] = useState([]);
+  const [updateList, setUpdateList] = useState(false)
 
   const navigate = useNavigate()
 
+  const api = 'http://localhost:3000/gerenciadorTarefas'
+
   async function listarTarefas() {
-    const tarefasRef = collection(db, "gerenciadorTarefas");
-    await getDocs(tarefasRef).then((snapshot) => {
-      let lista = [];
-      snapshot.forEach((doc) => {
-        lista.push({
-          id: doc.id,
-          tarefa: doc.data().tarefa,
-        });
-      });
-      setTarefas(lista);
-    });
+    try {
+      await axios.get(api).then(response => {
+        setTarefas(response.data)
+      })
+    } catch (error) {
+      alert('error')
+    }
   }
 
   useEffect(() => {
@@ -36,34 +28,34 @@ const MyUser = () => {
 
   async function registrarTarefa(e) {
     e.preventDefault();
+    if(tarefa === '') {
+      return false
+    }
     try {
-      const docRef = await addDoc(collection(db, "gerenciadorTarefas"), {
-        tarefa: tarefa,
-      });
-      setTarefas((prevTarefas) => [...prevTarefas, { id: docRef.id, tarefa }]);
-      setTarefa("");
-      alert("Gravou!");
+      let listaTarefas = await axios.get(api)
+      let lastId = parseInt(listaTarefas.data.length) + 1
+      axios.post(api, {
+        id: lastId,
+        tarefa: tarefa
+      })
+      setTarefa('')
     } catch (error) {
-      console.log(error);
+        alert('error')
     }
   }
 
   async function deletar(id) {
-    const docRef = doc(db, "gerenciadorTarefas", id);
-    await deleteDoc(docRef)
-      .then(() => {
-        setTarefas((prevTarefas) =>
-          prevTarefas.filter((item) => item.id !== id)
-        );
-        alert("Tarefa deletada!");
-      })
-      .catch(() => {
-        alert("Erro ao deletar!");
-      });
+   try {
+      axios.delete(api+`${id}`)
+      setUpdateList(true)
+      alert('Usuario deletado!')
+   } catch (error) {
+      alert('error')
+   }
   }
 
   function editarTarefa(id) {
-    navigate('/edit', { state: {id: id} })
+    navigate('/edit', { state: {id: id, api: api} })
   }
 
   return (
